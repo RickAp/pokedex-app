@@ -1,21 +1,18 @@
-import Pokemon from "../models/pokemon.model";
+import Pokemon from "../models/pokemon.model.js";
 
 export const addFavoritePokemon = async (req, res) => {
 
-    const { pokemonId, name, imageUrl, types } = req.body;
+    const { name, imageUrl, types } = req.body;
     const userId = req.user.id;
 
     try {
-      
       const newFavorite = new Pokemon({
         name,
-        pokemonId,
         imageUrl,
         types,
         user: userId
       });
   
-   
       await newFavorite.save();
   
       res.status(201).json(newFavorite);

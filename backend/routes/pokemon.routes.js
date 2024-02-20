@@ -8,3 +8,5 @@ const router = Router();
 
 router.post("/add", authRequired, validateSchema(addPokemonSchema), addFavoritePokemon);
 router.get("/favorites", authRequired, getFavoritePokemons);
+
+export default router;
