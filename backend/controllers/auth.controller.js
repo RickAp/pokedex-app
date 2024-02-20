@@ -62,9 +62,51 @@ export const logout = async (req, res) => {
 
 export const pokemons = async (req, res) => {
     try {
-        const response = await axios.get('https://pokeapi.co/api/v2/pokemon?limit=100');
-        res.json(response.data.results); 
-      } catch (error) {
+        
+        const page = parseInt(req.query.page, 20) || 1;
+        const limit = parseInt(req.query.limit, 20) || 20;
+        const offset = (page - 1) * limit;
+        const searchTerm = req.query.search;
+
+        let url = `https://pokeapi.co/api/v2/pokemon?limit=1000`; 
+        const { data } = await axios.get(url);
+        
+        let pokemonList = data?.results;
+
+        if (searchTerm) {
+            pokemonList = pokemonList.filter(pokemon => 
+                pokemon.name.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+        }
+
+        const paginatedPokemons = pokemonList.slice((page - 1) * limit, page * limit);
+
+        const detailedPokemons = await Promise.all(paginatedPokemons.map(async (pokemon) => {
+            const pokemonDetails = await axios.get(pokemon.url);
+            return {
+                name: pokemonDetails.data.name,
+                imageUrl: pokemonDetails.data.sprites.front_default,
+                types: pokemonDetails.data.types.map((type) => type.type.name),
+                count: data.count,
+                currentPage: page,
+                totalPages: Math.ceil(data.count / limit),
+            };
+        }));
+
+        res.json(detailedPokemons);
+    } catch (error) {
         res.status(500).json({ message: error.message });
-      }
-}
+    }
+};
+
+export const profile = async (req, res) => {
+    const userFound = await User.findById(req.user.id);
+
+    if (!userFound) return res.status(400).json({ message: "User not found" });
+
+    return res.json({
+       id: userFound._id,
+       email: userFound.email,
+       username: userFound.username, 
+    });
+};
